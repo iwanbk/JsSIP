@@ -175,6 +175,8 @@ JsSIP.Session = (function() {
     this.send();
   };
 
+
+  
   /**
   * @private
   */
@@ -749,6 +751,43 @@ JsSIP.Session = (function() {
     byeSender = new ByeSender(request);
 
     byeSender.send();
+  };
+  
+  Session.prototype.dtmf = function(digit) {
+    var extraHeaders = [];
+    //var requestParams;
+    var request;
+    var dtmfSender;
+    var session = this;
+    
+    function DtmfSender(request) {
+      this.request = request;
+      this.send = function() {
+        var request_sender = new JsSIP.RequestSender(this, session.ua);
+        this.receiveResponse = function(response){};
+
+        this.onRequestTimeout = function() {
+          session.onRequestTimeout();
+        };
+
+        this.onTransportError = function() {
+          session.onTransportError();
+        };
+
+        request_sender.send();
+      };
+    }
+
+    //this.from_tag = JsSIP.utils.newTag();
+
+    //requestParams = {from_tag: this.from_tag};
+
+    extraHeaders.push('Content-Type: application/dtmf-relay');
+    extraHeaders.push('Contact: <'+ this.contact + ';ob>');
+    request = this.dialog.createRequest(JsSIP.c.INFO, extraHeaders);
+    request.body = "Signal="+digit+"\r\nDuration=120";
+    dtmfSender = new DtmfSender(request);
+    dtmfSender.send();
   };
 
   /*

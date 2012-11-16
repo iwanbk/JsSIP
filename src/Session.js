@@ -783,7 +783,7 @@ JsSIP.Session = (function() {
     //requestParams = {from_tag: this.from_tag};
 
     extraHeaders.push('Content-Type: application/dtmf-relay');
-    extraHeaders.push('Contact: <'+ this.contact + ';ob>');
+    //extraHeaders.push('Contact: <'+ this.contact + ';ob>');
     request = this.dialog.createRequest(JsSIP.c.INFO, extraHeaders);
     request.body = "Signal="+digit+"\r\nDuration=120";
     dtmfSender = new DtmfSender(request);

@@ -135,14 +135,15 @@ JsSIP.UA.prototype.isConnected = function() {
  * @throws {JsSIP.exceptions.InvalidTargetError} If the calling target is invalid.
  *
  */
-JsSIP.UA.prototype.call = function(target, useAudio, useVideo, eventHandlers, videoViews) {
+JsSIP.UA.prototype.call = function(target, useAudio, useVideo, eventHandlers, videoViews, extraHeaders) {
   var session, options;
 
   // Call Options
   options = {
     views: videoViews,
     mediaType: {audio: useAudio, video: useVideo},
-    eventHandlers: eventHandlers
+    eventHandlers: eventHandlers,
+    extraHeaders: extraHeaders
   };
 
   session = new JsSIP.Session(this);

@@ -8,7 +8,7 @@
 var JsSIP = (function() {
   "use strict";
   var
-    productName = 'JsSIP',
+    productName = 'PlivoJS',
     productVersion = '0.2.1';
 
   return {
@@ -17,6 +17,6 @@ var JsSIP = (function() {
     },
     version: function() {
       return productVersion;
-    }
+    } 
   };
 }());

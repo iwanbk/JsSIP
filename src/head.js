@@ -8,7 +8,7 @@
 var JsSIP = (function() {
   "use strict";
   var
-    productName = 'PlivoJS',
+    productName = 'PlivoWebPhone',
     productVersion = '0.2.1';
 
   return {

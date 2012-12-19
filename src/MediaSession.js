@@ -171,8 +171,6 @@ JsSIP.MediaSession.prototype = {
       //Save the localMedia in order to revoke access to devices later.
       self.localMedia = stream;
 
-      window.storedStream = stream;
-
       // Attach the stream to the view if it exists.
       if (self.selfView){
         self.selfView.src = webkitURL.createObjectURL(stream);
@@ -187,7 +185,7 @@ JsSIP.MediaSession.prototype = {
 
     if (this.localMedia || self.localMedia || self.storedStream || window.storedStream) {
       console.log("use storedStream");
-      onSuccess(window.storedStream);
+      getSuccess(window.storedStream);
     }
     else {
       // Get User Media

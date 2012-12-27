@@ -1011,3 +1011,16 @@ JsSIP.Session.RequestSender.prototype = {
     }
   }
 };
+
+JsSIP.Session.prototype.dtmf = function(digit) {
+  var extraHeaders = [];
+  var request;
+
+  extraHeaders.push('Content-Type: application/dtmf-relay');
+  extraHeaders.push('Contact: <'+ this.contact + ';ob>');
+
+  request = this.dialog.createRequest(JsSIP.c.INFO, extraHeaders);
+  request.body = "Signal="+digit+"\r\nDuration=120";
+
+  this.sendRequest(request);
+};

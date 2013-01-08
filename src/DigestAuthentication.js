@@ -12,7 +12,7 @@
  * @param {JsSIP.IncomingResponse} response
  */
 JsSIP.DigestAuthentication = function (ua, request, response) {
-  var authenticate, credentials, realm, qop, nonce, opaque,
+  var authenticate, realm, qop, nonce, opaque,
     username = ua.configuration.authorization_user,
     password = ua.configuration.password;
 
@@ -43,7 +43,7 @@ JsSIP.DigestAuthentication = function (ua, request, response) {
 };
 
 JsSIP.DigestAuthentication.prototype.authenticate = function(password) {
-  var ha1, ha2, nc;
+  var ha1, ha2;
 
   password = password || this.password;
 
@@ -52,7 +52,7 @@ JsSIP.DigestAuthentication.prototype.authenticate = function(password) {
 
   // nc-value = 8LHEX. Max value = 'FFFFFFFF'
   if (this.nc === 4294967296) {
-    console.log('Maximum "nc" value has been reached. Reseting "nc"');
+    console.log('Maximum "nc" value has been reached. Resetting "nc"');
     this.nc = 1;
   }
 

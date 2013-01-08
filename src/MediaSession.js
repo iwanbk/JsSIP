@@ -1,5 +1,5 @@
 
-/*global SessionDescription: false, webkitURL: false, webkitRTCPeerConnection: false*/
+/*global webkitURL: false, webkitRTCPeerConnection: false*/
 
 /**
  * @fileoverview SIP User Agent
@@ -49,8 +49,8 @@ JsSIP.MediaSession.prototype = {
     }
 
     /** @private */
-    function onGetUserMediaFailure() {
-      onFailure();
+    function onGetUserMediaFailure(e) {
+      onFailure(e);
     }
 
     this.getUserMedia(mediaType, onGetUserMediaSuccess, onGetUserMediaFailure);
@@ -72,8 +72,7 @@ JsSIP.MediaSession.prototype = {
   * @param {String} sdp
   */
   startCallee: function(onSuccess, onMediaFailure, onSdpFailure, sdp) {
-    var offer, mediaType,
-      self = this;
+    var self = this;
 
     function onGetUserMediaSuccess(stream) {
       // Start peerConnection
@@ -82,16 +81,22 @@ JsSIP.MediaSession.prototype = {
       // add stream to peerConnection
       self.peerConnection.addStream(stream);
 
-      self.peerConnection.setRemoteDescription(new window.RTCSessionDescription({type:'offer', sdp:sdp}));
-
-      // Set local description and start Ice.
-      self.peerConnection.createAnswer(function(sessionDescription){
-        self.peerConnection.setLocalDescription(sessionDescription);
-      });
+      self.peerConnection.setRemoteDescription(
+        new window.RTCSessionDescription({type:'offer', sdp:sdp}),
+        function() {
+          self.peerConnection.createAnswer(
+            function(sessionDescription){
+              self.peerConnection.setLocalDescription(sessionDescription);
+            },
+            onSdpFailure
+          );
+        },
+        onSdpFailure
+      );
     }
 
-    function onGetUserMediaFailure() {
-      onMediaFailure();
+    function onGetUserMediaFailure(e) {
+      onMediaFailure(e);
     }
 
     self.getUserMedia({'audio':true, 'video':true}, onGetUserMediaSuccess, onGetUserMediaFailure);
@@ -131,7 +136,7 @@ JsSIP.MediaSession.prototype = {
     };
 
     this.peerConnection.onopen = function() {
-      console.log(JsSIP.c.LOG_MEDIA_SESSION +'Media session oppened');
+      console.log(JsSIP.c.LOG_MEDIA_SESSION +'Media session opened');
     };
 
     this.peerConnection.onaddstream = function(mediaStreamEvent) {
@@ -143,7 +148,7 @@ JsSIP.MediaSession.prototype = {
     };
 
     this.peerConnection.onremovestream = function(stream) {
-      console.log(JsSIP.c.LOG_MEDIA_SESSION +'Stream rmeoved: '+ stream);
+      console.log(JsSIP.c.LOG_MEDIA_SESSION +'Stream removed: '+ stream);
     };
 
     this.peerConnection.onstatechange = function() {
@@ -187,8 +192,8 @@ JsSIP.MediaSession.prototype = {
       onSuccess(stream);
     }
 
-    function getFailure() {
-      onFailure();
+    function getFailure(e) {
+      onFailure(e);
     }
 
     if (window.storedStream) {
@@ -213,12 +218,8 @@ JsSIP.MediaSession.prototype = {
     if (type === 'offer') {
       console.log(JsSIP.c.LOG_MEDIA_SESSION +'re-Invite received');
     } else if (type === 'answer') {
-      try {
-        this.peerConnection.setRemoteDescription(new window.RTCSessionDescription({type:'answer', sdp:sdp}));
-        onSuccess();
-      } catch (e) {
-        onFailure(e);
-      }
+      this.peerConnection.setRemoteDescription(
+        new window.RTCSessionDescription({type:'answer', sdp:sdp}), onSuccess, onFailure);
     }
   }
 };

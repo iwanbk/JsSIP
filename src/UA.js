@@ -404,7 +404,7 @@ JsSIP.UA.prototype.receiveRequest = function(request) {
 
   // Initial Request
   if(!request.to_tag) {
-    if(!this.registrator || (this.registrator && !this.registrator.registered)) {
+    if(!this.isRegistered()) {
       // High user does not want to be contacted
       request.reply(410);
       return;
@@ -607,7 +607,7 @@ JsSIP.UA.prototype.recoverTransport = function(ua) {
  */
 JsSIP.UA.prototype.loadConfig = function(configuration) {
   // Settings and default values
-  var parameter, attribute, idx, uri, host, ws_uri, contact,
+  var parameter, attribute, idx, uri, ws_uri, contact,
     settings = {
       /* Host address
       * Value to be set in Via sent_by and host part of Contact FQDN
@@ -635,12 +635,13 @@ JsSIP.UA.prototype.loadConfig = function(configuration) {
       no_answer_timeout: 60,
       stun_server: 'stun:stun.l.google.com:19302',
 
-      // Loggin parameters
+      // Logging parameters
       trace_sip: false,
 
       // Hacks
       hack_via_tcp: false,
-      hack_ip_in_contact: false
+      hack_ip_in_contact: false,
+      hack_single_crypto: false
     };
 
   // Pre-Configuration
@@ -807,6 +808,7 @@ JsSIP.UA.configuration_skeleton = (function() {
       "display_name",
       "hack_via_tcp", // false.
       "hack_ip_in_contact", //false
+      "hack_single_crypto", // false
       "password",
       "stun_server",
       "turn_server",
@@ -993,6 +995,9 @@ JsSIP.UA.configuration_check = {
     },
     hack_ip_in_contact: function(hack_ip_in_contact) {
       return typeof hack_ip_in_contact === 'boolean';
+    },
+    hack_single_crypto: function(hack_single_crypto) {
+      return typeof hack_single_crypto === 'boolean';
     }
   }
 };

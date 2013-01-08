@@ -373,7 +373,7 @@ JsSIP.Session.prototype.receiveInitialRequest = function(ua, request) {
     * @param {HTMLVideoElement} remoteView
     */
     this.answer = function(selfView, remoteView) {
-      var offer, onMediaSuccess, onMediaFailure, onSdpFailure;
+      var offer, onSuccess, onMediaFailure, onSdpFailure;
 
       // Check UA Status
       JsSIP.utils.checkUAStatus(this.ua);
@@ -385,7 +385,7 @@ JsSIP.Session.prototype.receiveInitialRequest = function(ua, request) {
 
       offer = request.body;
 
-      onMediaSuccess = function() {
+      onSuccess = function() {
         var sdp = session.mediaSession.peerConnection.localDescription.sdp;
 
         if(!session.createConfirmedDialog(request, 'UAS')) {
@@ -435,7 +435,7 @@ JsSIP.Session.prototype.receiveInitialRequest = function(ua, request) {
 
       //Initialize Media Session
       session.mediaSession = new JsSIP.MediaSession(session, selfView, remoteView);
-      session.mediaSession.startCallee(onMediaSuccess, onMediaFailure, onSdpFailure, offer);
+      session.mediaSession.startCallee(onSuccess, onMediaFailure, onSdpFailure, offer);
     };
 
     // Fire 'call' event callback
@@ -464,7 +464,7 @@ JsSIP.Session.prototype.receiveResponse = function(response) {
   var cause, label,
     session = this;
 
-  // Proceed to cancelation if the user requested.
+  // Proceed to cancellation if the user requested.
   if(this.isCanceled) {
     if(response.status_code >= 100 && response.status_code < 200) {
       this.request.cancel(this.cancelReason);
@@ -526,7 +526,7 @@ JsSIP.Session.prototype.receiveResponse = function(response) {
           return;
         }
 
-        this.acceptAndTerminate(response,'SIP ;cause= 400 ;text= "Missing session description"');
+        this.acceptAndTerminate(response,'SIP ;cause=400 ;text= "Missing session description"');
         this.failed('remote', response, JsSIP.c.causes.BAD_MEDIA_DESCRIPTION);
 
         break;
@@ -561,7 +561,7 @@ JsSIP.Session.prototype.receiveResponse = function(response) {
            */
           function(e) {
             console.warn(e);
-            session.acceptAndTerminate(response, 'SIP ;cause= 488 ;text= "Not Acceptable Here"');
+            session.acceptAndTerminate(response, 'SIP ;cause=488 ;text="Not Acceptable Here"');
             session.failed('remote', response, JsSIP.c.causes.BAD_MEDIA_DESCRIPTION);
           }
         );
@@ -934,20 +934,15 @@ JsSIP.Session.prototype.sendInitialRequest = function(mediaType) {
     // Set the body to the request and send it.
     self.request.body = self.mediaSession.peerConnection.localDescription.sdp;
 
-    // Hack to quit m=video section from sdp defined in http://code.google.com/p/webrtc/issues/detail?id=935
-    // To be deleted when the fix arrives to chrome stable version
-    if (!mediaType.video) {
-      if (self.request.body.indexOf('m=video') !== -1){
-        self.request.body = self.request.body.substring(0, self.request.body.indexOf('m=video'));
-      }
+    if (self.ua.configuration.hack_single_crypto) {
+      self.request.body = self.request.body.replace(/a=crypto:0.+\s+/g,'');
     }
-    // End of Hack
 
     self.status = JsSIP.c.SESSION_INVITE_SENT;
     request_sender.send();
   }
 
-  function onMediaFailure(fail,e) {
+  function onMediaFailure(e) {
     if (self.status !== JsSIP.c.SESSION_TERMINATED) {
       console.log(JsSIP.c.LOG_CLIENT_INVITE_SESSION +'Media Access denied');
       self.failed('local', null, JsSIP.c.causes.USER_DENIED_MEDIA_ACCESS);
@@ -970,7 +965,7 @@ JsSIP.Session.RequestSender = function(session, request, onReceiveResponse) {
   this.session = session;
   this.request = request;
   this.onReceiveResponse = onReceiveResponse;
-  this.reatempt = false;
+  this.reattempt = false;
   this.reatemptTimer = null;
   this.request_sender = new JsSIP.InDialogRequestSender(this);
 
@@ -983,14 +978,14 @@ JsSIP.Session.RequestSender.prototype = {
       status_code = response.status_code;
 
     if (this.session.status !== JsSIP.c.SESSION_TERMINATED) {
-      if (response.method === JsSIP.c.INVITE && status_code === 491 && !this.reatempt) {
+      if (response.method === JsSIP.c.INVITE && status_code === 491 && !this.reattempt) {
             this.request.cseq.value = this.request.dialog.local_seqnum += 1;
             this.reatemptTimer = window.setTimeout(
               function() {
-                self.reatempt = true;
+                self.reattempt = true;
                 self.request_sender.send();
               },
-              this.getReatempTimeout()
+              this.getReattemptTimeout()
             );
       } else {
         this.onReceiveResponse.call(this.session, response);
@@ -1003,7 +998,7 @@ JsSIP.Session.RequestSender.prototype = {
   },
 
   // RFC3261 14.1
-  getReatempTimeout: function() {
+  getReattemptTimeout: function() {
     if(this.session.direction === 'outgoing') {
       return (Math.random() * (4 - 2.1) + 2.1).toFixed(2);
     } else {
